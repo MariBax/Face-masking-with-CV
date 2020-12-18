@@ -1,6 +1,11 @@
 # Face-masking-with-CV
 Final Project on Computer Vision Skoltech course 2020
 
+## Goals
+* Attach masks to different parts of face on selfies, videos, in real-time
+* Make them move with a person
+* Add extra features depending on movements
+
 ## CV algorithm
 
 ### 1. Keypoints detection
@@ -36,6 +41,6 @@ Check out fast_guide.ipynb
 ## Tools
 * Python 3
 * OpenCV
-* Keypoint detection: The cascade of regressors using dlib
+* Keypoint detection: the cascade of regressors using dlib
 
 
