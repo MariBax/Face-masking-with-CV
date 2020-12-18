@@ -6,6 +6,8 @@ Final Project on Computer Vision Skoltech course 2020
 * Make them move with a person
 * Add extra features depending on movements
 
+![step_0](./images/masks_desc.PNG)
+
 ## CV algorithm
 
 ### 1. Keypoints detection
