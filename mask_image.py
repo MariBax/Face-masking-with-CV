@@ -12,49 +12,51 @@ import math
 from utils import *
 
 
-def mask_image(frame, MASK_NAME):
+def mask_image(frame, MASK_NAME, add_corona_mask):
 	ear_cnt = cnt = total = 0
 
 	detector = dlib.get_frontal_face_detector()
-	# predictor = dlib.shape_predictor('drive/My Drive/Computer Vision/Project/models/shape_predictor_68_face_landmarks.dat')
-	predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+	predictor = dlib.shape_predictor('drive/My Drive/Computer Vision/Project/models/shape_predictor_68_face_landmarks.dat')
+	# predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	rects = detector(gray, 0)
 	for rect in rects:
-	    frame, ear_cnt, total, cnt = process_rect(frame, gray, predictor, rect, ear_cnt, total, cnt, MASK_NAME)
+	    frame, ear_cnt, total, cnt = process_rect(frame, gray, predictor, rect, ear_cnt, total, cnt, 
+	    	MASK_NAME, add_corona_mask=add_corona_mask)
 	return frame
 
-def process_rect(frame, gray, predictor, rect, ear_cnt, total, cnt, MASK_NAME, blink_info=False):
-    shape = predictor(gray, rect)
-    shape = face_utils.shape_to_np(shape)
+def process_rect(frame, gray, predictor, rect, ear_cnt, total, cnt, MASK_NAME, add_corona_mask=False, blink_info=False):
+	shape = predictor(gray, rect)
+	shape = face_utils.shape_to_np(shape)
 
-    # extract start and end points
-    leftEye, rightEye = shape[42:48], shape[36:42]
-    ulip, blip = get_lips(shape)
+	# extract start and end points
+	leftEye, rightEye = shape[42:48], shape[36:42]
+	ulip, blip = get_lips(shape)
 
-    # calc eyes ratio
-    ear = calc_eyes_ratio(leftEye, rightEye)
-    if ear < EYE_AR_THRESH:
-        ear_cnt += 1
-    else:
-        if ear_cnt >= EYE_AR_CONSEC_FRAMES:
-            total += 1
-        ear_cnt = 0
+	# calc eyes ratio
+	ear = calc_eyes_ratio(leftEye, rightEye)
+	if ear < EYE_AR_THRESH:
+		ear_cnt += 1
+	else:
+		if ear_cnt >= EYE_AR_CONSEC_FRAMES:
+			total += 1
+		ear_cnt = 0
 
-    # print info about eyes
-    if blink_info:
-	    cv2.putText(frame, "Blinks: {}".format(total), (10, 30),
-	    	cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+	if blink_info:
+		cv2.putText(frame, "Blinks: {}".format(total), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-    # if mouth is open, put corona mask
-    if check_mouth_open(ulip, blip):
-        cnt += 1
-        if cnt >= 10:
-            frame = mask_image(frame, shape, corona_mask, 'face_mask.jpeg')
-    else:
-        cnt = 0
+	# if mouth is open, put corona mask
+	if add_corona_mask:
+		# print(check_mouth_open(ulip, blip))
+		if check_mouth_open(ulip, blip):
+			cnt += 1
+			# if cnt >= 10:
+			frame = mask_rect(frame, shape, 'face_mask.jpeg')
+			cv2.putText(frame, "Put your mask on!", (50, 300), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+		else:
+			cnt = 0
 
-    return mask_rect(frame, shape, MASK_NAME), ear_cnt, total, cnt
+	return mask_rect(frame, shape, MASK_NAME), ear_cnt, total, cnt
 
 
 def mask_rect(frame, shape, MASK_NAME):
