@@ -20,7 +20,7 @@ MASK_INFO = { 'mask1.jpg': {
                   "src_points": np.float32([[270, 400], [680, 400], [470, 550]]),
                   "dst_points": 'eyes',
                   "transparent": False},
-              'cat_nose.png': {
+              '1_cat_nose.PNG': {
                   "src_points": np.float32([[500, 400], [450, 500], [550, 500]]),
                   "dst_points": 'nose',
                   "transparent": True},
@@ -91,3 +91,32 @@ def calc_eyes_ratio(leftEye, rightEye):
     leftEAR = eye_aspect_ratio(leftEye)
     rightEAR = eye_aspect_ratio(rightEye)
     return (leftEAR + rightEAR) / 2.0
+
+def contouring(thresh, mid, img, right=False):
+    cnts, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    # cv2.drawContours(img, cnts, -1, (0, 255, 255), 3)
+
+    cnts = sorted(cnts, key = cv2.contourArea)
+
+    for cnt in cnts[-2:]:
+        cnt = max(cnts, key = cv2.contourArea)
+        M = cv2.moments(cnt)
+        cx = int(M['m10'] / M['m00'])
+        cy = int(M['m01'] / M['m00'])
+        x, y, w, h = cv2.boundingRect(cnt)
+        if right:
+            cx += mid 
+        cv2.circle(img, (cx, cy), min(h, w) // 2, (0, 0, 255), 3)
+
+
+########## MISC
+
+def overlay_transparent(background_img, img_to_overlay_t, x, y):
+    # overlays a transparant PNG onto another image
+    bg_img = background_img.copy()
+    b, g, r, a = cv2.split(img_to_overlay_t)
+    overlay_color = cv2.merge((b,g,r))
+    alpha = a / 255.0
+    h, w, _ = overlay_color.shape
+    bg_img[y:y+h, x:x+w] = cv2.add(alpha[:, :, None] * overlay_color, (1 - alpha[:, :, None]) * bg_img[y:y+h, x:x+w])
+    return bg_img
